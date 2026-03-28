@@ -1,0 +1,10 @@
+{
+  "sleepStart": "23:00",
+  "sleepEnd": "07:00",
+  "waterReminderInterval": 30,
+  "restReminderThreshold": 120,
+  "enableWaterReminder": true,
+  "enableRestReminder": true,
+  "enableTypingDetection": true,
+  "idleTimeout": 5
+}

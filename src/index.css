@@ -1,0 +1,268 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Global Styles ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Nunito', sans-serif;
+  user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* ===== Cat Avatar Base ===== */
+.cat-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.cat-container:hover {
+  transform: scale(1.05);
+}
+
+/* ===== SVG Cat Styles ===== */
+.cat-body {
+  transition: all 0.5s ease;
+}
+
+/* ===== Cat State Animations ===== */
+
+/* Idle: gentle floating + blinking */
+.cat-state-idle {
+  animation: catFloat 3s ease-in-out infinite;
+}
+
+.cat-state-idle .cat-eyes {
+  animation: catBlink 4s ease-in-out infinite;
+}
+
+.cat-state-idle .cat-tail {
+  animation: tailWag 2s ease-in-out infinite;
+  transform-origin: 85% 75%;
+}
+
+/* Typing: slight bounce + paw movement */
+.cat-state-typing {
+  animation: typingBounce 0.3s ease-in-out infinite;
+}
+
+.cat-state-typing .cat-paws {
+  animation: pawType 0.4s ease-in-out infinite alternate;
+}
+
+/* Sleeping: slow breathing */
+.cat-state-sleeping {
+  animation: sleepBreathe 3s ease-in-out infinite;
+}
+
+.cat-state-sleeping .cat-zzz {
+  animation: zzzFloat 2s ease-in-out infinite;
+}
+
+/* Drinking: bob down motion */
+.cat-state-drinking {
+  animation: drinkingBob 1s ease-in-out infinite;
+}
+
+/* Tired: slight droop */
+.cat-state-tired {
+  animation: tiredDroop 2s ease-in-out infinite;
+}
+
+/* ===== Keyframe Animations ===== */
+@keyframes catFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes catBlink {
+  0%, 42%, 58%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes tailWag {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(8deg); }
+  75% { transform: rotate(-8deg); }
+}
+
+@keyframes typingBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pawType {
+  0% { transform: translateY(0) rotate(-5deg); }
+  100% { transform: translateY(-4px) rotate(5deg); }
+}
+
+@keyframes sleepBreathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.04) translateY(2px); }
+}
+
+@keyframes zzzFloat {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  50% { opacity: 1; transform: translate(10px, -15px) scale(1); }
+  100% { opacity: 0; transform: translate(20px, -30px) scale(0.5); }
+}
+
+@keyframes drinkingBob {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(5px) rotate(5deg); }
+}
+
+@keyframes tiredDroop {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(4px) rotate(-3deg); }
+}
+
+/* ===== Notification Bubble ===== */
+.notification-bubble {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #fee2e2, #fce7f3);
+  border: 2px solid #f9a8d4;
+  border-radius: 16px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #831843;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(249, 168, 212, 0.4);
+  animation: slideUp 0.4s ease-out, fadeIn 0.3s ease-out;
+  z-index: 100;
+}
+
+.notification-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #f9a8d4;
+}
+
+@keyframes slideUp {
+  0% { transform: translateX(-50%) translateY(20px); opacity: 0; }
+  100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ===== Settings Panel ===== */
+.settings-panel {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(252, 231, 243, 0.95));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(249, 168, 212, 0.3);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 0 60px rgba(249, 168, 212, 0.15);
+  padding: 24px;
+  width: 360px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.settings-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-panel::-webkit-scrollbar-thumb {
+  background: #f9a8d4;
+  border-radius: 3px;
+}
+
+/* ===== Toggle Switch ===== */
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: #e5e7eb;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.toggle-switch.active {
+  background: linear-gradient(135deg, #f472b6, #a78bfa);
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-switch.active::after {
+  transform: translateX(22px);
+}
+
+/* ===== Control Buttons ===== */
+.control-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.control-btn:hover {
+  transform: scale(1.1);
+}
+
+.control-btn-settings {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #4338ca;
+}
+
+.control-btn-close {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #dc2626;
+}
