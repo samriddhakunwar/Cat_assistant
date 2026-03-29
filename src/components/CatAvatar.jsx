@@ -4,11 +4,18 @@ import React from 'react';
  * CatAvatar Component
  * Renders an SVG cat with CSS animation classes based on the current state.
  *
- * States: idle, typing, sleeping, drinking, tired
+ * Props:
+ *  - state: 'idle' | 'typing' | 'sleeping' | 'drinking' | 'tired'
+ *  - dragHandlers: { onMouseDown, onDoubleClick } from useDrag hook
+ *  - isDragging: boolean — true while the user is dragging
  */
-export default function CatAvatar({ state = 'idle' }) {
+export default function CatAvatar({ state = 'idle', dragHandlers = {}, isDragging = false }) {
   return (
-    <div className={`cat-container cat-state-${state}`}>
+    <div
+      className={`cat-container cat-state-${state}${isDragging ? ' cat-dragging' : ''}`}
+      title="Drag to move • Double-click to reset position"
+      {...dragHandlers}
+    >
       <svg
         width="180"
         height="180"

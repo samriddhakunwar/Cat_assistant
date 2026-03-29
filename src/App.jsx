@@ -4,6 +4,7 @@ import Notification from './components/Notification';
 import SettingsPanel from './components/SettingsPanel';
 import { useActivityTracker } from './hooks/useActivityTracker';
 import { useSettings } from './hooks/useSettings';
+import { useDrag } from './hooks/useDrag';
 
 /**
  * Main App Component
@@ -26,6 +27,9 @@ export default function App() {
 function WidgetView() {
   const { settings, loading: settingsLoading } = useSettings();
   const { status, loading: statusLoading } = useActivityTracker(2000);
+
+  // Drag functionality — click+drag to move window, double-click to reset
+  const { isDragging, dragHandlers } = useDrag();
 
   // Cat state: idle | typing | sleeping | drinking | tired
   const [catState, setCatState] = useState('idle');
@@ -165,8 +169,15 @@ function WidgetView() {
         />
       )}
 
-      {/* Cat Avatar */}
-      <CatAvatar state={catState} />
+      {/* Cat Avatar — drag handlers and isDragging are wired here */}
+      <CatAvatar state={catState} dragHandlers={dragHandlers} isDragging={isDragging} />
+
+      {/* Drag hint — briefly visible so the user discovers the feature */}
+      {isDragging && (
+        <div className="drag-hint">
+          🐾 Dragging…
+        </div>
+      )}
 
       {/* Status indicator */}
       <div className="mt-1 flex items-center gap-1.5">

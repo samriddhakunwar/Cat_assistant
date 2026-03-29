@@ -42,6 +42,47 @@ body {
   transform: scale(1.05);
 }
 
+/* ===== Drag States ===== */
+
+/* Draggable cursor on hover — but only when not actively dragging */
+.cat-container:not(.cat-dragging) {
+  cursor: grab;
+}
+
+/* While dragging: lift effect + grabbing cursor + suppress float animation jitter */
+.cat-container.cat-dragging {
+  cursor: grabbing !important;
+  transform: scale(1.08) !important;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.25));
+  /* Pause state animations so the cat doesn't wobble while being dragged */
+  animation-play-state: paused !important;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+
+.cat-container.cat-dragging * {
+  animation-play-state: paused !important;
+}
+
+/* Drag hint pill — shown at the bottom of the widget while dragging */
+.drag-hint {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fadeIn 0.2s ease-out;
+  z-index: 200;
+}
+
 /* ===== SVG Cat Styles ===== */
 .cat-body {
   transition: all 0.5s ease;
