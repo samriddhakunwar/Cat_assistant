@@ -16,6 +16,8 @@ DEFAULT_SETTINGS = {
     "enableRestReminder": True,
     "enableTypingDetection": True,
     "idleTimeout": 5,
+    "enableVoiceReminder": True,
+    "voiceVolume": 0.8,
 }
 
 # Path to the settings file (relative to project root)

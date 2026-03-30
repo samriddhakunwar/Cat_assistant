@@ -5,6 +5,7 @@ import SettingsPanel from './components/SettingsPanel';
 import { useActivityTracker } from './hooks/useActivityTracker';
 import { useSettings } from './hooks/useSettings';
 import { useDrag } from './hooks/useDrag';
+import { useSleepVoice } from './hooks/useSleepVoice';
 
 /**
  * Main App Component
@@ -35,6 +36,9 @@ function WidgetView() {
   const [catState, setCatState] = useState('idle');
   const [notification, setNotification] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Voice reminder — plays cat_voice.mp3 every 5 min during sleep
+  useSleepVoice(catState === 'sleeping', settings);
 
   // Timers for water and rest reminders
   const waterTimerRef = useRef(null);

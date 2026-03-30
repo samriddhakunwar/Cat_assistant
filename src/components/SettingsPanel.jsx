@@ -171,7 +171,7 @@ export default function SettingsPanel() {
       </section>
 
       {/* Idle Timeout */}
-      <section className="mb-6">
+      <section className="mb-5">
         <h3 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
           ⏱️ Idle Timeout
         </h3>
@@ -190,6 +190,45 @@ export default function SettingsPanel() {
             {localSettings.idleTimeout} min
           </span>
         </div>
+      </section>
+
+      {/* Voice Reminder */}
+      <section className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-bold text-gray-700 flex items-center gap-1">
+            🔊 Voice Reminder
+          </h3>
+          <div
+            className={`toggle-switch ${localSettings.enableVoiceReminder ? 'active' : ''}`}
+            onClick={() => handleChange('enableVoiceReminder', !localSettings.enableVoiceReminder)}
+            id="toggle-voice"
+          />
+        </div>
+        {localSettings.enableVoiceReminder && (
+          <>
+            <p className="text-[10px] text-gray-400 mb-2">
+              Plays a meow every 5 min during your sleep schedule 😴
+            </p>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400">🔇</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={Math.round((localSettings.voiceVolume ?? 0.8) * 100)}
+                onChange={(e) =>
+                  handleChange('voiceVolume', parseInt(e.target.value) / 100)
+                }
+                className="flex-1 h-2 bg-amber-100 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                id="slider-voice-volume"
+              />
+              <span className="text-sm font-bold text-amber-500 min-w-[50px] text-right">
+                {Math.round((localSettings.voiceVolume ?? 0.8) * 100)}%
+              </span>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Save Button */}

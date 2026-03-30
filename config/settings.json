@@ -6,5 +6,7 @@
   "enableWaterReminder": true,
   "enableRestReminder": true,
   "enableTypingDetection": true,
-  "idleTimeout": 5
+  "idleTimeout": 5,
+  "enableVoiceReminder": true,
+  "voiceVolume": 0.8
 }

@@ -35,6 +35,8 @@ export function useSettings() {
           enableRestReminder: true,
           enableTypingDetection: true,
           idleTimeout: 5,
+          enableVoiceReminder: true,
+          voiceVolume: 0.8,
         });
       } finally {
         setLoading(false);
