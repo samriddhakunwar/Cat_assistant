@@ -5,7 +5,7 @@ import React from 'react';
  * Renders an SVG cat with CSS animation classes based on the current state.
  *
  * Props:
- *  - state: 'idle' | 'typing' | 'sleeping' | 'drinking' | 'tired'
+ *  - state: 'idle' | 'typing' | 'sleeping' | 'drinking' | 'tired' | 'happy'
  *  - dragHandlers: { onMouseDown, onDoubleClick } from useDrag hook
  *  - isDragging: boolean — true while the user is dragging
  */
@@ -75,6 +75,19 @@ export default function CatAvatar({ state = 'idle', dragHandlers = {}, isDraggin
             <path d="M71 90 Q80 94 89 90" stroke="#D4A594" strokeWidth="1" fill="none" opacity="0.5" />
             <path d="M111 90 Q120 94 129 90" stroke="#D4A594" strokeWidth="1" fill="none" opacity="0.5" />
           </g>
+        ) : state === 'happy' ? (
+          /* Happy face - big shiny eyes + wide smile */
+          <g className="cat-eyes">
+            <ellipse cx="80" cy="83" rx="12" ry="13" fill="white" stroke="#5D4037" strokeWidth="1.5" />
+            <ellipse cx="80" cy="83" rx="8" ry="9" fill="#5D4037" />
+            <ellipse cx="77" cy="79" rx="3" ry="3.5" fill="white" />
+            <ellipse cx="120" cy="83" rx="12" ry="13" fill="white" stroke="#5D4037" strokeWidth="1.5" />
+            <ellipse cx="120" cy="83" rx="8" ry="9" fill="#5D4037" />
+            <ellipse cx="117" cy="79" rx="3" ry="3.5" fill="white" />
+            {/* star highlights */}
+            <text x="86" y="72" fontSize="10" fill="#fbbf24">✦</text>
+            <text x="124" y="72" fontSize="10" fill="#fbbf24">✦</text>
+          </g>
         ) : (
           /* Normal eyes */
           <g className="cat-eyes">
@@ -104,6 +117,9 @@ export default function CatAvatar({ state = 'idle', dragHandlers = {}, isDraggin
           <path d="M93 104 Q100 100 107 104" stroke="#E8956A" strokeWidth="1.5" fill="none" strokeLinecap="round" />
         ) : state === 'drinking' ? (
           <ellipse cx="100" cy="104" rx="4" ry="3" fill="#FF8A9E" stroke="#E8707E" strokeWidth="1" />
+        ) : state === 'happy' ? (
+          /* Big open happy smile */
+          <path d="M88 104 Q100 116 112 104" stroke="#E8956A" strokeWidth="2" fill="#FF8A9E" fillOpacity="0.4" strokeLinecap="round" />
         ) : (
           <g>
             <path d="M93 102 Q97 108 100 102" stroke="#E8956A" strokeWidth="1.5" fill="none" strokeLinecap="round" />
@@ -154,6 +170,12 @@ export default function CatAvatar({ state = 'idle', dragHandlers = {}, isDraggin
               <rect x="104" y="188" width="5" height="5" rx="1" fill="#CBD5E1" />
               <rect x="112" y="188" width="12" height="5" rx="1" fill="#CBD5E1" />
             </>
+          ) : state === 'happy' ? (
+            /* Raised paws celebrating */
+            <>
+              <ellipse cx="62" cy="152" rx="13" ry="8" fill="#FFB088" stroke="#E8956A" strokeWidth="1.5" transform="rotate(-35 62 152)" />
+              <ellipse cx="138" cy="152" rx="13" ry="8" fill="#FFB088" stroke="#E8956A" strokeWidth="1.5" transform="rotate(35 138 152)" />
+            </>
           ) : (
             /* Regular paws */
             <>
@@ -189,6 +211,16 @@ export default function CatAvatar({ state = 'idle', dragHandlers = {}, isDraggin
             <path d="M42 180 L45 172 L75 172 L78 180" fill="#BFDBFE" stroke="#60A5FA" strokeWidth="1.5" />
             {/* Water droplet */}
             <path d="M55 168 Q57 163 59 168 Q57 171 55 168" fill="#60A5FA" opacity="0.6" />
+          </g>
+        )}
+
+        {/* === Happy sparkles === */}
+        {state === 'happy' && (
+          <g className="cat-sparkles">
+            <text x="20" y="50" fontSize="16" fill="#fbbf24">✨</text>
+            <text x="155" y="45" fontSize="14" fill="#f472b6">⭐</text>
+            <text x="30" y="120" fontSize="12" fill="#a78bfa">✦</text>
+            <text x="160" y="110" fontSize="12" fill="#34d399">✦</text>
           </g>
         )}
       </svg>

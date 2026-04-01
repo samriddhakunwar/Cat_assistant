@@ -40,6 +40,8 @@ class SettingsUpdate(BaseModel):
     enableRestReminder: bool = True
     enableTypingDetection: bool = True
     idleTimeout: int = 5
+    enableVoiceReminder: bool = False
+    voiceVolume: float = 0.5
 
 
 # --- Endpoints ---
@@ -82,6 +84,16 @@ def reset_timer():
 def health_check():
     """Simple health check endpoint."""
     return {"status": "ok"}
+
+
+@app.get("/analytics/snapshot")
+def analytics_snapshot():
+    """Returns a point-in-time snapshot of current activity for the analytics hook."""
+    return {
+        "screen_time_minutes": round(activity_tracker.screen_time_minutes, 1),
+        "is_typing": activity_tracker.is_typing,
+        "idle_seconds": round(activity_tracker.idle_seconds, 1),
+    }
 
 
 # --- Shutdown ---
