@@ -8,6 +8,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('show-notification', { title, body }),
   openSettings: () => ipcRenderer.invoke('open-settings'),
   closeSettings: () => ipcRenderer.invoke('close-settings'),
+  openWidgets: () => ipcRenderer.invoke('open-widgets'),
+  closeWidgets: () => ipcRenderer.invoke('close-widgets'),
+  openAnalytics: () => ipcRenderer.invoke('open-analytics'),
+  closeAnalytics: () => ipcRenderer.invoke('close-analytics'),
   quitApp: () => ipcRenderer.invoke('quit-app'),
 
   // --- Drag / Position APIs ---

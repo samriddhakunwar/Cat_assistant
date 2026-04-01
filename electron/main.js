@@ -5,6 +5,8 @@ const { spawn } = require('child_process');
 
 let mainWindow;
 let settingsWindow = null;
+let widgetWindow = null;
+let analyticsWindow = null;
 let tray;
 let pythonProcess;
 
@@ -166,6 +168,78 @@ function createSettingsWindow() {
   });
 }
 
+function createWidgetWindow() {
+  if (widgetWindow) {
+    widgetWindow.focus();
+    return;
+  }
+
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  widgetWindow = new BrowserWindow({
+    width: 360,
+    height: 500,
+    x: Math.max(0, width - 660),
+    y: height - 540,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  const isDev = process.argv.includes('--dev') || !app.isPackaged;
+  const url = isDev
+    ? 'http://localhost:5173/#widgets'
+    : `file://${path.join(__dirname, '..', 'dist', 'index.html')}#widgets`;
+  widgetWindow.loadURL(url);
+
+  widgetWindow.on('closed', () => {
+    widgetWindow = null;
+  });
+}
+
+function createAnalyticsWindow() {
+  if (analyticsWindow) {
+    analyticsWindow.focus();
+    return;
+  }
+
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  analyticsWindow = new BrowserWindow({
+    width: 460,
+    height: 580,
+    x: Math.max(0, width - 500),
+    y: Math.max(0, height - 620),
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  const isDev = process.argv.includes('--dev') || !app.isPackaged;
+  const url = isDev
+    ? 'http://localhost:5173/#analytics'
+    : `file://${path.join(__dirname, '..', 'dist', 'index.html')}#analytics`;
+  analyticsWindow.loadURL(url);
+
+  analyticsWindow.on('closed', () => {
+    analyticsWindow = null;
+  });
+}
+
 // --- IPC Handlers ---
 ipcMain.handle('show-notification', (event, { title, body }) => {
   new Notification({ title, body }).show();
@@ -178,6 +252,26 @@ ipcMain.handle('open-settings', () => {
 ipcMain.handle('close-settings', () => {
   if (settingsWindow) {
     settingsWindow.close();
+  }
+});
+
+ipcMain.handle('open-widgets', () => {
+  createWidgetWindow();
+});
+
+ipcMain.handle('close-widgets', () => {
+  if (widgetWindow) {
+    widgetWindow.close();
+  }
+});
+
+ipcMain.handle('open-analytics', () => {
+  createAnalyticsWindow();
+});
+
+ipcMain.handle('close-analytics', () => {
+  if (analyticsWindow) {
+    analyticsWindow.close();
   }
 });
 
