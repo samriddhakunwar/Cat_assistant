@@ -11,10 +11,11 @@ let tray;
 let pythonProcess;
 
 // --- Position Persistence ---
-// Save/load the cat's window position to a local JSON file so it
-// survives app restarts. The file is stored in the user-data directory
-// managed by Electron (e.g., %APPDATA%/cat-desktop-assistant).
 const POSITION_FILE = path.join(app.getPath('userData'), 'window-position.json');
+
+// Window dimensions (must match the BrowserWindow size)
+const MAIN_WIDTH = 280;
+const MAIN_HEIGHT = 350;
 
 /**
  * Load saved window position from disk.
@@ -50,13 +51,54 @@ function savePosition(x, y) {
  */
 function getDefaultPosition() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  return { x: width - 300, y: height - 370 };
+  return { x: width - MAIN_WIDTH - 20, y: height - MAIN_HEIGHT - 20 };
+}
+
+/**
+ * Clamp a window position so it stays within screen boundaries.
+ * At least 60px of the window must remain on-screen on every edge.
+ */
+function clampToScreen(x, y, winWidth, winHeight) {
+  const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+
+  // Ensure the FULL window is always within screen bounds (no off-screen placement)
+  const clampedX = Math.max(0, Math.min(x, screenW - winWidth));
+  const clampedY = Math.max(0, Math.min(y, screenH - winHeight));
+  return { x: Math.round(clampedX), y: Math.round(clampedY) };
+}
+
+/**
+ * Get a safe initial position: use saved position if it's on-screen,
+ * otherwise fall back to default.
+ */
+function getSafeInitialPosition() {
+  const saved = loadSavedPosition();
+  const defaultPos = getDefaultPosition();
+
+  if (!saved) return defaultPos;
+
+  // Validate saved position keeps the FULL window on-screen
+  const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize;
+  const isFullyOnScreen =
+    saved.x >= 0 &&
+    saved.y >= 0 &&
+    saved.x + MAIN_WIDTH <= screenW &&
+    saved.y + MAIN_HEIGHT <= screenH;
+
+  if (isFullyOnScreen) {
+    return { x: Math.round(saved.x), y: Math.round(saved.y) };
+  }
+
+  // Saved position is off-screen or partially off-screen — clamp it
+  const clamped = clampToScreen(saved.x, saved.y, MAIN_WIDTH, MAIN_HEIGHT);
+  console.warn(`[Position] Saved position (${saved.x},${saved.y}) was off-screen; clamped to (${clamped.x},${clamped.y}).`);
+  savePosition(clamped.x, clamped.y);
+  return clamped;
 }
 
 // --- Python Backend Management ---
 function startPythonBackend() {
   const backendPath = path.join(__dirname, '..', 'backend');
-  // Try 'python' first, fall back to 'python3'
   pythonProcess = spawn('python', ['-m', 'uvicorn', 'main:app', '--host', '127.0.0.1', '--port', '8765'], {
     cwd: backendPath,
     stdio: 'pipe',
@@ -93,17 +135,14 @@ function stopPythonBackend() {
 
 // --- Window Creation ---
 function createMainWindow() {
-  // Determine initial position: use saved position if available, else default
-  const saved = loadSavedPosition();
-  const defaultPos = getDefaultPosition();
-  const initialX = saved ? saved.x : defaultPos.x;
-  const initialY = saved ? saved.y : defaultPos.y;
+  const pos = getSafeInitialPosition();
 
   mainWindow = new BrowserWindow({
-    width: 280,
-    height: 350,
-    x: initialX,
-    y: initialY,
+    width: MAIN_WIDTH,
+    height: MAIN_HEIGHT,
+    x: pos.x,
+    y: pos.y,
+    show: false,           // Don't show until content is ready
     frame: false,          // Frameless window — no title bar
     transparent: true,     // Transparent background for the floating widget
     alwaysOnTop: true,     // Always visible above all other windows
@@ -117,6 +156,33 @@ function createMainWindow() {
     },
   });
 
+  // Show window only when the renderer is fully painted
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    mainWindow.focus();
+    console.log(`[Window] Main window shown at (${pos.x}, ${pos.y})`);
+  });
+
+  // Failsafe: if ready-to-show doesn't fire within 3 seconds, force show
+  const failsafeTimer = setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      console.warn('[Window] Failsafe: forcing window visible after timeout');
+      mainWindow.show();
+      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      mainWindow.focus();
+    }
+  }, 3000);
+
+  mainWindow.once('show', () => clearTimeout(failsafeTimer));
+
+  // Log any renderer-side errors so we can diagnose paint failures
+  mainWindow.webContents.on('did-fail-load', (event, code, desc) => {
+    console.error(`[Window] Renderer failed to load: ${code} – ${desc}`);
+    // Force show anyway so the window at least appears (even blank)
+    if (mainWindow && !mainWindow.isVisible()) mainWindow.show();
+  });
+
   // In development, load from Vite dev server; in production, load built files
   const isDev = process.argv.includes('--dev') || !app.isPackaged;
 
@@ -126,7 +192,8 @@ function createMainWindow() {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
   }
 
-  // Make transparent areas click-through
+  // Ensure transparent areas DON'T block mouse events on other windows,
+  // but the cat itself IS clickable.
   mainWindow.setIgnoreMouseEvents(false);
 
   mainWindow.on('closed', () => {
@@ -134,19 +201,32 @@ function createMainWindow() {
   });
 }
 
+/**
+ * Helper: compute a safe position for secondary windows.
+ * Prevents negative coordinates on small screens.
+ */
+function safeSecondaryPosition(winWidth, winHeight, offsetX, offsetY) {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const x = Math.max(20, Math.min(width - winWidth - 20, width - offsetX));
+  const y = Math.max(20, Math.min(height - winHeight - 20, height - offsetY));
+  return { x, y };
+}
+
 function createSettingsWindow() {
   if (settingsWindow) {
+    settingsWindow.show();
     settingsWindow.focus();
     return;
   }
 
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const pos = safeSecondaryPosition(400, 520, 420, 560);
 
   settingsWindow = new BrowserWindow({
     width: 400,
     height: 520,
-    x: width - 420,
-    y: height - 560,
+    x: pos.x,
+    y: pos.y,
+    show: false,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -157,6 +237,11 @@ function createSettingsWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  settingsWindow.once('ready-to-show', () => {
+    settingsWindow.show();
+    settingsWindow.focus();
   });
 
   const isDev = process.argv.includes('--dev') || !app.isPackaged;
@@ -170,17 +255,19 @@ function createSettingsWindow() {
 
 function createWidgetWindow() {
   if (widgetWindow) {
+    widgetWindow.show();
     widgetWindow.focus();
     return;
   }
 
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const pos = safeSecondaryPosition(360, 500, 660, 540);
 
   widgetWindow = new BrowserWindow({
     width: 360,
     height: 500,
-    x: Math.max(0, width - 660),
-    y: height - 540,
+    x: pos.x,
+    y: pos.y,
+    show: false,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -191,6 +278,11 @@ function createWidgetWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  widgetWindow.once('ready-to-show', () => {
+    widgetWindow.show();
+    widgetWindow.focus();
   });
 
   const isDev = process.argv.includes('--dev') || !app.isPackaged;
@@ -206,17 +298,19 @@ function createWidgetWindow() {
 
 function createAnalyticsWindow() {
   if (analyticsWindow) {
+    analyticsWindow.show();
     analyticsWindow.focus();
     return;
   }
 
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const pos = safeSecondaryPosition(460, 580, 500, 620);
 
   analyticsWindow = new BrowserWindow({
     width: 460,
     height: 580,
-    x: Math.max(0, width - 500),
-    y: Math.max(0, height - 620),
+    x: pos.x,
+    y: pos.y,
+    show: false,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -227,6 +321,11 @@ function createAnalyticsWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  analyticsWindow.once('ready-to-show', () => {
+    analyticsWindow.show();
+    analyticsWindow.focus();
   });
 
   const isDev = process.argv.includes('--dev') || !app.isPackaged;
@@ -283,18 +382,18 @@ ipcMain.handle('quit-app', () => {
 
 /**
  * set-window-position: Move the main window to (x, y) and persist the position.
- * Called by the renderer process during drag operations.
+ * Clamps to screen boundaries to prevent off-screen placement.
  */
 ipcMain.handle('set-window-position', (event, { x, y }) => {
   if (mainWindow) {
-    mainWindow.setPosition(Math.round(x), Math.round(y), false);
-    savePosition(Math.round(x), Math.round(y));
+    const clamped = clampToScreen(x, y, MAIN_WIDTH, MAIN_HEIGHT);
+    mainWindow.setPosition(clamped.x, clamped.y, false);
+    savePosition(clamped.x, clamped.y);
   }
 });
 
 /**
  * get-window-position: Return the current [x, y] of the main window.
- * Used by the renderer to initialise drag offset calculations.
  */
 ipcMain.handle('get-window-position', () => {
   if (mainWindow) {
@@ -306,7 +405,6 @@ ipcMain.handle('get-window-position', () => {
 
 /**
  * get-screen-size: Return the usable work-area dimensions of the primary display.
- * Used by the renderer to clamp the window inside screen boundaries.
  */
 ipcMain.handle('get-screen-size', () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -315,7 +413,7 @@ ipcMain.handle('get-screen-size', () => {
 
 /**
  * reset-window-position: Move the window back to its default position
- * (bottom-right corner) and persist it. Triggered by double-clicking the cat.
+ * (bottom-right corner) and persist it.
  */
 ipcMain.handle('reset-window-position', () => {
   const pos = getDefaultPosition();
@@ -328,12 +426,13 @@ ipcMain.handle('reset-window-position', () => {
 
 // --- App Lifecycle ---
 app.whenReady().then(() => {
-  startPythonBackend();
+  // Create the main window immediately — the cat must appear as fast as possible.
+  // The backend is started in parallel; hooks in the renderer gracefully fall back
+  // to defaults when the backend is not yet available.
+  createMainWindow();
 
-  // Wait a bit for the backend to start
-  setTimeout(() => {
-    createMainWindow();
-  }, 2000);
+  // Start Python backend after window is visible
+  startPythonBackend();
 });
 
 app.on('window-all-closed', () => {

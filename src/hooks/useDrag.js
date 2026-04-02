@@ -40,14 +40,9 @@ export function useDrag() {
    */
   const clampPosition = useCallback((x, y) => {
     const { width: screenW, height: screenH } = screenSizeRef.current;
-    const clampedX = Math.max(
-      -(WIN_WIDTH - EDGE_MARGIN),
-      Math.min(x, screenW - EDGE_MARGIN)
-    );
-    const clampedY = Math.max(
-      -(WIN_HEIGHT - EDGE_MARGIN),
-      Math.min(y, screenH - EDGE_MARGIN)
-    );
+    // Keep the FULL window within screen bounds (no off-screen drift)
+    const clampedX = Math.max(0, Math.min(x, screenW - WIN_WIDTH));
+    const clampedY = Math.max(0, Math.min(y, screenH - WIN_HEIGHT));
     return { x: clampedX, y: clampedY };
   }, []);
 

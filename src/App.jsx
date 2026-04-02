@@ -12,15 +12,22 @@ import { useSleepVoice } from './hooks/useSleepVoice';
 /**
  * Main App Component
  * Routes to the correct view based on the URL hash.
+ * Listens for hashchange so direct browser navigation works too.
  */
 export default function App() {
-  const hash = window.location.hash;
+  const [hash, setHash] = useState(window.location.hash);
+
+  useEffect(() => {
+    const onHashChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   if (hash === '#settings')  return <SettingsView />;
   if (hash === '#widgets')   return <WidgetsView />;
   if (hash === '#analytics') return <AnalyticsView />;
 
-  return <WidgetView />;
+  return <MainCatView />;
 }
 
 // ─── Widget Panel View ─────────────────────────────────────────────────────────
@@ -42,13 +49,14 @@ function AnalyticsView() {
 }
 
 // ─── Main Cat Widget View ──────────────────────────────────────────────────────
-function WidgetView() {
+function MainCatView() {
   const { settings, loading: settingsLoading } = useSettings();
   const { status, loading: statusLoading } = useActivityTracker(2000);
 
   const { isDragging, dragHandlers } = useDrag();
 
   // Cat state: idle | typing | sleeping | drinking | tired | happy
+  // Always start with 'idle' so the cat is immediately visible while loading
   const [catState, setCatState] = useState('idle');
   const [notification, setNotification] = useState(null);
 
@@ -159,7 +167,10 @@ function WidgetView() {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-end w-full h-full pb-2">
+    <div
+      className="relative flex flex-col items-center justify-end w-full h-full pb-2"
+      style={{ minHeight: '100vh', minWidth: '100vw', boxSizing: 'border-box' }}
+    >
       {notification && (
         <Notification
           message={notification.message}

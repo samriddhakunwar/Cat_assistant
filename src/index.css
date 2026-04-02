@@ -20,10 +20,15 @@ body {
 #root {
   width: 100vw;
   height: 100vh;
+  min-width: 100vw;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
+  /* Ensure root is always painted even on transparent windows */
+  position: relative;
+  z-index: 0;
 }
 
 /* ===== Cat Avatar Base ===== */
@@ -36,6 +41,8 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: transform 0.3s ease;
+  /* Always render above other overlapping elements */
+  z-index: 9999;
 }
 
 .cat-container:hover {
